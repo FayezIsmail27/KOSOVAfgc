@@ -245,6 +245,7 @@ timezone: UTC-4   (Toronto time, copied from results.first.global)
   // English wording, 24-hour clock. The time zone always comes from the visitor's device.
   const timeFmt = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
   const dayFmt = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  const weekdayFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short" });
 
   const own = OWN_TEAM.map((name) => name.toLowerCase());
   const isOwn = (team) => own.includes(team.toLowerCase());
@@ -354,12 +355,34 @@ timezone: UTC-4   (Toronto time, copied from results.first.global)
     return wrap;
   }
 
-  function renderSchedule(matches) {
+  function matchRow(match, isDone) {
+    const date = new Date(match.start);
+    const when = isDone ? `${weekdayFmt.format(date)} ${timeFmt.format(date)}` : timeFmt.format(date);
+    const time = el("time", "time", when);
+    time.dateTime = date.toISOString();
+    match.statusNode = el("span", "status", isDone ? "Done" : "");
+
+    const head = el("div", "head");
+    head.append(time, el("span", "label", match.label));
+    if (match.field) head.append(el("span", "field", match.field));
+    head.append(match.statusNode);
+
+    const row = el("li", isDone ? "match done" : "match");
+    row.append(head);
+    const block = alliancesBlock(match);
+    if (block) row.append(block);
+    return row;
+  }
+
+  // Upcoming matches grouped by day, then finished matches at the bottom.
+  // The next match is left out here because it is shown at the top.
+  function renderList(upcoming, done) {
     const root = $("schedule-list");
+    root.replaceChildren();
     let currentDay = "";
     let list;
 
-    for (const match of matches) {
+    for (const match of upcoming) {
       const date = new Date(match.start);
       if (dayKey(date) !== currentDay) {
         currentDay = dayKey(date);
@@ -368,21 +391,15 @@ timezone: UTC-4   (Toronto time, copied from results.first.global)
         section.append(el("h2", "", dayFmt.format(date)), list);
         root.append(section);
       }
+      list.append(matchRow(match, false));
+    }
 
-      const time = el("time", "time", timeFmt.format(date));
-      time.dateTime = date.toISOString();
-      match.statusNode = el("span", "status");
-
-      const head = el("div", "head");
-      head.append(time, el("span", "label", match.label));
-      if (match.field) head.append(el("span", "field", match.field));
-      head.append(match.statusNode);
-
-      match.node = el("li", "match");
-      match.node.append(head);
-      const block = alliancesBlock(match);
-      if (block) match.node.append(block);
-      list.append(match.node);
+    if (done.length) {
+      const section = el("section", "day");
+      const doneList = el("ul", "matches");
+      done.forEach((match) => doneList.append(matchRow(match, true)));
+      section.append(el("h2", "", "Done"), doneList);
+      root.append(section);
     }
   }
 
@@ -463,14 +480,24 @@ timezone: UTC-4   (Toronto time, copied from results.first.global)
     }
   }
 
+  let doneCount = -1; // forces the first render
+
   function tick(matches) {
     const now = Date.now();
-    let target = null;
-    for (const match of matches) {
-      const done = now >= match.start + NOW_MINUTES * 60000;
-      match.node.classList.toggle("done", done);
-      match.statusNode.textContent = now < match.start ? startsIn(match.start - now) : done ? "Done" : "Now";
-      if (!target && !done) target = match;
+
+    // Matches are sorted by time, so the finished ones are always the first few.
+    let count = 0;
+    while (count < matches.length && now >= matches[count].start + NOW_MINUTES * 60000) count++;
+
+    const target = matches[count] || null;
+    const upcoming = matches.slice(count + 1);
+    if (count !== doneCount) {
+      doneCount = count;
+      renderList(upcoming, matches.slice(0, count));
+    }
+
+    for (const match of upcoming) {
+      match.statusNode.textContent = now < match.start ? startsIn(match.start - now) : "Now";
     }
     renderNext(matches, target, now);
   }
@@ -478,7 +505,6 @@ timezone: UTC-4   (Toronto time, copied from results.first.global)
   // ---------- Start ----------
 
   const { matches, unreadable } = parseSchedule($("schedule").textContent);
-  renderSchedule(matches);
 
   if (matches.length) {
     $("tz-note").textContent = `Times are in your local time (${utcOffsetLabel()}).`;
