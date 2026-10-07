@@ -1,1 +1,505 @@
-hi
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Kosova matches</title>
+<meta name="description" content="Team Kosova's matches at the FIRST Global Challenge 2026 in Incheon, shown in your own time zone.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+
+<!--
+  MATCH SCHEDULE
+  This block is the only part you need to edit.
+
+  The timezone line says which time zone the times below are written in.
+  It applies to every line after it, so you can add another one further down
+  (for example "timezone: UTC+9" for Incheon time). Visitors always see the
+  times converted to their own device's time zone.
+
+  One match per line, columns separated by |
+    match | date (year-month-day) | time | field | red alliance | blue alliance
+
+  match      A number on its own shows as "Match 12". Text like "Final 1" shows as is.
+  time       22:15 or 10:15 PM both work.
+  red, blue  Team codes as results.first.global shows them, separated by commas.
+             On that site the left three are red and the right three are blue.
+             The page adds the flags and country names.
+
+  Lines starting with # are ignored. The page sorts matches by time.
+-->
+<script type="text/plain" id="schedule">
+timezone: UTC-4   (Toronto time, copied from results.first.global)
+
+# match | date       | time  | field | red           | blue
+2       | 2026-10-07 | 22:15 | 4     | URU, CRC, RUS | KAZ, VAN, KOS
+55      | 2026-10-08 | 01:40 | 1     | TLS, NCA, KOS | VIE, SEY, BLR
+91      | 2026-10-08 | 03:25 | 1     | MGL, QAT, MHL | FIJ, LTU, KOS
+113     | 2026-10-08 | 04:21 | 5     | BHU, KOS, MDA | SRB, GAM, BEN
+154     | 2026-10-08 | 21:43 | 2     | GRE, TOG, SSD | KOS, PLE, CIV
+177     | 2026-10-08 | 22:50 | 3     | AUS, KOR, UKR | SEN, KOS, POL
+200     | 2026-10-08 | 23:54 | 4     | KOS, DOM, NED | ITA, BUR, GRN
+241     | 2026-10-09 | 02:54 | 1     | ESA, LBA, USA | KOS, AFG, AZE
+258     | 2026-10-09 | 03:34 | 3     | LES, RWA, LBN | DEN, ALB, KOS
+285     | 2026-10-09 | 20:55 | 3     | MOZ, KOS, SWE | GUY, MRI, ASA
+313     | 2026-10-09 | 22:15 | 1     | KOS, TTO, PAK | BIH, ISR, SRI
+</script>
+
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --text: #000000;
+    --muted: #666666;
+    --rule: #e2e2e2;
+    --red: #c62828;
+    --blue: #1565c0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --text: #ffffff;
+      --muted: #a3a3a3;
+      --rule: #2e2e2e;
+      --red: #ef5350;
+      --blue: #64b5f6;
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+  h1, h2, p, ul { margin: 0; }
+  a { color: inherit; text-underline-offset: 0.15em; }
+  a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+  main { max-width: 40rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+
+  h1 { font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.01em; }
+  .event { margin-top: 0.25rem; color: var(--muted); }
+
+  /* Next match */
+  .next { margin-top: 2.5rem; }
+  .next h2 { font-size: 1rem; font-weight: 600; color: var(--muted); }
+  .countdown {
+    margin-top: 0.25rem;
+    font-size: clamp(2.75rem, 13vw, 5rem);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .next-name { margin-top: 0.75rem; font-size: 1.125rem; font-weight: 600; }
+  .next-when, .next-side { color: var(--muted); }
+  .next .alliances { margin-top: 1rem; }
+
+  .note { color: var(--muted); font-size: 0.875rem; }
+  .tz { margin-top: 2rem; }
+
+  /* Schedule */
+  .day { margin-top: 2rem; }
+  .day h2 { padding-bottom: 0.5rem; font-size: 1rem; font-weight: 600; }
+  .matches { list-style: none; padding: 0; }
+  .match { padding: 1rem 0; border-top: 1px solid var(--rule); }
+  .match:last-child { border-bottom: 1px solid var(--rule); }
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.75rem; }
+  .time, .label { font-weight: 600; }
+  .time, .status { font-variant-numeric: tabular-nums; }
+  .field, .status { color: var(--muted); }
+  .status { margin-left: auto; white-space: nowrap; }
+  .match .alliances { margin-top: 0.625rem; }
+
+  /* Alliances */
+  .alliances { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .alliance { min-width: 0; padding-top: 0.375rem; border-top: 3px solid var(--red); }
+  .alliance.blue { border-top-color: var(--blue); }
+  .side { font-size: 0.8125rem; font-weight: 600; color: var(--red); }
+  .blue .side { color: var(--blue); }
+  .alliance ul { list-style: none; padding: 0; margin-top: 0.25rem; }
+  .team { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.125rem 0; }
+  .team.own { font-weight: 700; }
+  .flag {
+    flex: none;
+    width: 20px;
+    height: 15px;
+    margin-top: 0.25em;
+    border-radius: 2px;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.35);
+  }
+  span.flag { box-shadow: none; }
+
+  .match.done { color: var(--muted); }
+  .match.done .alliance { border-top-color: var(--rule); }
+  .match.done .side { color: var(--muted); }
+  .match.done .flag { opacity: 0.5; }
+
+  .errors { margin-top: 2rem; }
+  .errors ul { margin-top: 0.5rem; padding-left: 1.25rem; }
+  footer { margin-top: 2.5rem; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Team Kosova</h1>
+    <p class="event">FIRST Global Challenge 2026, Incheon</p>
+  </header>
+
+  <section class="next" aria-labelledby="next-title">
+    <h2 id="next-title">Next match</h2>
+    <p class="countdown" id="countdown" role="timer" hidden></p>
+    <p class="next-name" id="next-name"></p>
+    <p class="next-when" id="next-when" hidden></p>
+    <p class="next-side" id="next-side" hidden></p>
+    <div id="next-teams"></div>
+    <noscript><p class="next-name">Turn on JavaScript to see the schedule.</p></noscript>
+  </section>
+
+  <p class="note tz" id="tz-note" hidden></p>
+  <div id="schedule-list"></div>
+  <div class="note errors" id="errors" hidden></div>
+
+  <footer class="note">
+    <p>Times follow the official schedule, and matches can run late.
+      Live results: <a href="https://results.first.global/">results.first.global</a></p>
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  // Settings
+  const DEFAULT_UTC_OFFSET_HOURS = 9;             // used until a "timezone:" line appears (Incheon, UTC+9)
+  const OWN_TEAM = ["KOS", "Kosova", "Kosovo"];   // shown in bold, and used to say which alliance Kosova is in
+  const NOW_MINUTES = 15;                         // a match shows "Now" for this long after its start time
+  const FLAG_URL = "https://cdn.jsdelivr.net/npm/flag-icons@7.5.0/flags/4x3/";
+
+  // Team codes as used on results.first.global: [flag file, name]
+  const TEAMS = {
+    AFG: ["af", "Afghanistan"], ALB: ["al", "Albania"], ALG: ["dz", "Algeria"], AND: ["ad", "Andorra"],
+    ANG: ["ao", "Angola"], ANT: ["ag", "Antigua and Barbuda"], ARG: ["ar", "Argentina"], ARM: ["am", "Armenia"],
+    ARU: ["aw", "Aruba"], ASA: ["as", "American Samoa"], AUS: ["au", "Australia"], AUT: ["at", "Austria"],
+    AZE: ["az", "Azerbaijan"], BAH: ["bs", "Bahamas"], BAN: ["bd", "Bangladesh"], BAR: ["bb", "Barbados"],
+    BDI: ["bi", "Burundi"], BEL: ["be", "Belgium"], BEN: ["bj", "Benin"], BER: ["bm", "Bermuda"],
+    BHU: ["bt", "Bhutan"], BIH: ["ba", "Bosnia and Herzegovina"], BIZ: ["bz", "Belize"], BLR: ["by", "Belarus"],
+    BOL: ["bo", "Bolivia"], BOT: ["bw", "Botswana"], BRA: ["br", "Brazil"], BRN: ["bh", "Bahrain"],
+    BRU: ["bn", "Brunei"], BUL: ["bg", "Bulgaria"], BUR: ["bf", "Burkina Faso"], CAF: ["cf", "Central African Republic"],
+    CAM: ["kh", "Cambodia"], CAN: ["ca", "Canada"], CAY: ["ky", "Cayman Islands"], CGO: ["cg", "Congo"],
+    CHA: ["td", "Chad"], CHI: ["cl", "Chile"], CHN: ["cn", "China"], CIV: ["ci", "Côte d'Ivoire"],
+    CMR: ["cm", "Cameroon"], COD: ["cd", "DR Congo"], COK: ["ck", "Cook Islands"], COL: ["co", "Colombia"],
+    COM: ["km", "Comoros"], CPV: ["cv", "Cabo Verde"], CRC: ["cr", "Costa Rica"], CRO: ["hr", "Croatia"],
+    CUB: ["cu", "Cuba"], CUW: ["cw", "Curaçao"], CYP: ["cy", "Cyprus"], CZE: ["cz", "Czechia"],
+    DEN: ["dk", "Denmark"], DJI: ["dj", "Djibouti"], DMA: ["dm", "Dominica"], DOM: ["do", "Dominican Republic"],
+    ECU: ["ec", "Ecuador"], EGY: ["eg", "Egypt"], ERI: ["er", "Eritrea"], ESA: ["sv", "El Salvador"],
+    ESP: ["es", "Spain"], EST: ["ee", "Estonia"], ETH: ["et", "Ethiopia"], FIJ: ["fj", "Fiji"],
+    FIN: ["fi", "Finland"], FRA: ["fr", "France"], FRO: ["fo", "Faroe Islands"], FSM: ["fm", "Micronesia"],
+    GAB: ["ga", "Gabon"], GAM: ["gm", "Gambia"], GBR: ["gb", "United Kingdom"], GBS: ["gw", "Guinea-Bissau"],
+    GEO: ["ge", "Georgia"], GEQ: ["gq", "Equatorial Guinea"], GER: ["de", "Germany"], GHA: ["gh", "Ghana"],
+    GIB: ["gi", "Gibraltar"], GRE: ["gr", "Greece"], GRN: ["gd", "Grenada"], GUA: ["gt", "Guatemala"],
+    GUI: ["gn", "Guinea"], GUM: ["gu", "Guam"], GUY: ["gy", "Guyana"], HAI: ["ht", "Haiti"],
+    HKG: ["hk", "Hong Kong"], HON: ["hn", "Honduras"], HUN: ["hu", "Hungary"], INA: ["id", "Indonesia"],
+    IND: ["in", "India"], IRI: ["ir", "Iran"], IRL: ["ie", "Ireland"], IRQ: ["iq", "Iraq"],
+    ISL: ["is", "Iceland"], ISR: ["il", "Israel"], ISV: ["vi", "US Virgin Islands"], ITA: ["it", "Italy"],
+    IVB: ["vg", "British Virgin Islands"], JAM: ["jm", "Jamaica"], JOR: ["jo", "Jordan"], JPN: ["jp", "Japan"],
+    KAZ: ["kz", "Kazakhstan"], KEN: ["ke", "Kenya"], KGZ: ["kg", "Kyrgyzstan"], KIR: ["ki", "Kiribati"],
+    KOR: ["kr", "South Korea"], KOS: ["xk", "Kosova"], KSA: ["sa", "Saudi Arabia"], KUW: ["kw", "Kuwait"],
+    LAO: ["la", "Laos"], LAT: ["lv", "Latvia"], LBA: ["ly", "Libya"], LBN: ["lb", "Lebanon"],
+    LBR: ["lr", "Liberia"], LCA: ["lc", "Saint Lucia"], LES: ["ls", "Lesotho"], LIE: ["li", "Liechtenstein"],
+    LTU: ["lt", "Lithuania"], LUX: ["lu", "Luxembourg"], MAC: ["mo", "Macau"], MAD: ["mg", "Madagascar"],
+    MAR: ["ma", "Morocco"], MAS: ["my", "Malaysia"], MAW: ["mw", "Malawi"], MDA: ["md", "Moldova"],
+    MDV: ["mv", "Maldives"], MEX: ["mx", "Mexico"], MGL: ["mn", "Mongolia"], MHL: ["mh", "Marshall Islands"],
+    MKD: ["mk", "North Macedonia"], MLI: ["ml", "Mali"], MLT: ["mt", "Malta"], MNE: ["me", "Montenegro"],
+    MON: ["mc", "Monaco"], MOZ: ["mz", "Mozambique"], MRI: ["mu", "Mauritius"], MTN: ["mr", "Mauritania"],
+    MYA: ["mm", "Myanmar"], NAM: ["na", "Namibia"], NCA: ["ni", "Nicaragua"], NED: ["nl", "Netherlands"],
+    NEP: ["np", "Nepal"], NGR: ["ng", "Nigeria"], NIG: ["ne", "Niger"], NOR: ["no", "Norway"],
+    NRU: ["nr", "Nauru"], NZL: ["nz", "New Zealand"], OMA: ["om", "Oman"], PAK: ["pk", "Pakistan"],
+    PAN: ["pa", "Panama"], PAR: ["py", "Paraguay"], PER: ["pe", "Peru"], PHI: ["ph", "Philippines"],
+    PLE: ["ps", "Palestine"], PLW: ["pw", "Palau"], PNG: ["pg", "Papua New Guinea"], POL: ["pl", "Poland"],
+    POR: ["pt", "Portugal"], PRK: ["kp", "North Korea"], PUR: ["pr", "Puerto Rico"], QAT: ["qa", "Qatar"],
+    ROU: ["ro", "Romania"], RSA: ["za", "South Africa"], RUS: ["ru", "Russia"], RWA: ["rw", "Rwanda"],
+    SAM: ["ws", "Samoa"], SEN: ["sn", "Senegal"], SEY: ["sc", "Seychelles"], SGP: ["sg", "Singapore"],
+    SKN: ["kn", "Saint Kitts and Nevis"], SLE: ["sl", "Sierra Leone"], SLO: ["si", "Slovenia"], SMR: ["sm", "San Marino"],
+    SOL: ["sb", "Solomon Islands"], SOM: ["so", "Somalia"], SRB: ["rs", "Serbia"], SRI: ["lk", "Sri Lanka"],
+    SSD: ["ss", "South Sudan"], STP: ["st", "São Tomé and Príncipe"], SUD: ["sd", "Sudan"], SUI: ["ch", "Switzerland"],
+    SUR: ["sr", "Suriname"], SVK: ["sk", "Slovakia"], SWE: ["se", "Sweden"], SWZ: ["sz", "Eswatini"],
+    SYR: ["sy", "Syria"], TAN: ["tz", "Tanzania"], TGA: ["to", "Tonga"], THA: ["th", "Thailand"],
+    TJK: ["tj", "Tajikistan"], TKM: ["tm", "Turkmenistan"], TLS: ["tl", "Timor-Leste"], TOG: ["tg", "Togo"],
+    TPE: ["", "Chinese Taipei"], TTO: ["tt", "Trinidad and Tobago"], TUN: ["tn", "Tunisia"], TUR: ["tr", "Türkiye"],
+    TUV: ["tv", "Tuvalu"], UAE: ["ae", "United Arab Emirates"], UGA: ["ug", "Uganda"], UKR: ["ua", "Ukraine"],
+    URU: ["uy", "Uruguay"], USA: ["us", "United States"], UZB: ["uz", "Uzbekistan"], VAN: ["vu", "Vanuatu"],
+    VEN: ["ve", "Venezuela"], VIE: ["vn", "Vietnam"], VIN: ["vc", "Saint Vincent and the Grenadines"], YEM: ["ye", "Yemen"],
+    ZAM: ["zm", "Zambia"], ZIM: ["zw", "Zimbabwe"],
+  };
+
+  // English wording, 24-hour clock. The time zone always comes from the visitor's device.
+  const timeFmt = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const dayFmt = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" });
+
+  const own = OWN_TEAM.map((name) => name.toLowerCase());
+  const isOwn = (team) => own.includes(team.toLowerCase());
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2, "0");
+  const dayKey = (date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+  // ---------- Reading the schedule ----------
+
+  function teamCodes(cell) {
+    return cell.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+
+  function parseSchedule(text) {
+    const matches = [];
+    const unreadable = [];
+    let offsetHours = DEFAULT_UTC_OFFSET_HOURS;
+
+    text.split(/\r?\n/).forEach((raw, index) => {
+      const line = raw.trim();
+      if (!line || line.startsWith("#")) return;
+
+      // "timezone: UTC-4" sets the time zone for the lines after it
+      const zone = /^time\s*zone\s*:?\s*(?:utc|gmt)?\s*([+\-\u2212])\s*(\d{1,2})(?::(\d{2}))?(?:\s.*)?$/i.exec(line);
+      if (zone) {
+        offsetHours = (zone[1] === "+" ? 1 : -1) * (Number(zone[2]) + Number(zone[3] || 0) / 60);
+        return;
+      }
+
+      const [label = "", date = "", time = "", field = "", red = "", blue = ""] =
+        line.split("|").map((cell) => cell.trim());
+      const d = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(date);
+      const t = /^(\d{1,2})[:.](\d{2})(?:\s*([ap])\.?\s*m\.?)?$/i.exec(time);
+      if (!label || !d || !t) { unreadable.push(line); return; }
+
+      const year = +d[1], month = +d[2], day = +d[3];
+      let hour = +t[1];
+      const minute = +t[2];
+      if (t[3]) {
+        if (hour < 1 || hour > 12) { unreadable.push(line); return; }
+        hour = (hour % 12) + (t[3].toLowerCase() === "p" ? 12 : 0);
+      }
+      const wallClock = Date.UTC(year, month - 1, day, hour, minute);
+      const check = new Date(wallClock);
+      if (hour > 23 || minute > 59 || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) {
+        unreadable.push(line);
+        return;
+      }
+
+      const redTeams = teamCodes(red);
+      const blueTeams = teamCodes(blue);
+      matches.push({
+        label: /^\d+$/.test(label) ? `Match ${label}` : label,
+        field: /^\d+$/.test(field) ? `Field ${field}` : field,
+        red: redTeams,
+        blue: blueTeams,
+        side: redTeams.some(isOwn) ? "red" : blueTeams.some(isOwn) ? "blue" : "",
+        start: wallClock - offsetHours * 3600000,
+        index,
+      });
+    });
+
+    matches.sort((a, b) => a.start - b.start || a.index - b.index);
+    return { matches, unreadable };
+  }
+
+  // ---------- Building the page ----------
+
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function teamItem(code) {
+    const known = TEAMS[code.toUpperCase()];
+    const item = el("li", isOwn(code) ? "team own" : "team");
+    if (known && known[0]) {
+      const flag = document.createElement("img");
+      flag.className = "flag";
+      flag.src = FLAG_URL + known[0] + ".svg";
+      flag.alt = "";
+      flag.width = 20;
+      flag.height = 15;
+      flag.loading = "lazy";
+      flag.decoding = "async";
+      flag.addEventListener("error", () => { flag.style.visibility = "hidden"; });
+      item.append(flag);
+    } else {
+      item.append(el("span", "flag"));
+    }
+    item.append(el("span", "", known ? known[1] : code));
+    return item;
+  }
+
+  function alliancesBlock(match) {
+    if (!match.red.length && !match.blue.length) return null;
+    const wrap = el("div", "alliances");
+    for (const side of ["red", "blue"]) {
+      const box = el("div", `alliance ${side}`);
+      const list = el("ul");
+      match[side].forEach((code) => list.append(teamItem(code)));
+      box.append(el("p", "side", side === "red" ? "Red alliance" : "Blue alliance"), list);
+      wrap.append(box);
+    }
+    return wrap;
+  }
+
+  function renderSchedule(matches) {
+    const root = $("schedule-list");
+    let currentDay = "";
+    let list;
+
+    for (const match of matches) {
+      const date = new Date(match.start);
+      if (dayKey(date) !== currentDay) {
+        currentDay = dayKey(date);
+        const section = el("section", "day");
+        list = el("ul", "matches");
+        section.append(el("h2", "", dayFmt.format(date)), list);
+        root.append(section);
+      }
+
+      const time = el("time", "time", timeFmt.format(date));
+      time.dateTime = date.toISOString();
+      match.statusNode = el("span", "status");
+
+      const head = el("div", "head");
+      head.append(time, el("span", "label", match.label));
+      if (match.field) head.append(el("span", "field", match.field));
+      head.append(match.statusNode);
+
+      match.node = el("li", "match");
+      match.node.append(head);
+      const block = alliancesBlock(match);
+      if (block) match.node.append(block);
+      list.append(match.node);
+    }
+  }
+
+  // ---------- Time helpers ----------
+
+  function parts(ms) {
+    const s = Math.ceil(ms / 1000);
+    return { d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 };
+  }
+
+  // Big countdown: 02:14:59, or 1d 07:12:09
+  function countdown(ms) {
+    const t = parts(ms);
+    const hms = `${pad(t.h)}:${pad(t.m)}:${pad(t.s)}`;
+    return t.d ? `${t.d}d ${hms}` : hms;
+  }
+
+  // Countdown in each row: in 2h 14m 09s
+  function startsIn(ms) {
+    const t = parts(ms);
+    if (t.d) return `in ${t.d}d ${t.h}h ${pad(t.m)}m ${pad(t.s)}s`;
+    if (t.h) return `in ${t.h}h ${pad(t.m)}m ${pad(t.s)}s`;
+    if (t.m) return `in ${t.m}m ${pad(t.s)}s`;
+    return `in ${t.s}s`;
+  }
+
+  function dayName(date, now) {
+    const today = new Date(now);
+    const tomorrow = new Date(now);
+    tomorrow.setDate(today.getDate() + 1);
+    if (dayKey(date) === dayKey(today)) return "Today";
+    if (dayKey(date) === dayKey(tomorrow)) return "Tomorrow";
+    return dayFmt.format(date);
+  }
+
+  function utcOffsetLabel() {
+    const offset = -new Date().getTimezoneOffset();
+    const abs = Math.abs(offset);
+    return `UTC${offset < 0 ? "\u2212" : "+"}${Math.floor(abs / 60)}${abs % 60 ? ":" + pad(abs % 60) : ""}`;
+  }
+
+  // ---------- Live updates (uses the visitor's own clock) ----------
+
+  let shown; // the match currently in the "Next match" block
+
+  function renderNext(matches, target, now) {
+    const clock = $("countdown");
+    const name = $("next-name");
+    const when = $("next-when");
+    const side = $("next-side");
+
+    if (target !== shown) {
+      shown = target;
+      const holder = $("next-teams");
+      holder.replaceChildren();
+      clock.hidden = when.hidden = !target;
+      side.hidden = !(target && target.side);
+      if (target) {
+        name.textContent = target.field ? `${target.label} on ${target.field}` : target.label;
+        side.textContent = target.side ? `Kosova is in the ${target.side} alliance.` : "";
+        const block = alliancesBlock(target);
+        if (block) holder.append(block);
+      } else {
+        name.textContent = matches.length
+          ? "All scheduled matches are done."
+          : "The match schedule hasn't been posted yet.";
+      }
+    }
+    if (!target) return;
+
+    const date = new Date(target.start);
+    if (now < target.start) {
+      clock.textContent = countdown(target.start - now);
+      when.textContent = `${dayName(date, now)} at ${timeFmt.format(date)}`;
+    } else {
+      clock.textContent = "Now";
+      when.textContent = `Scheduled for ${timeFmt.format(date)}`;
+    }
+  }
+
+  function tick(matches) {
+    const now = Date.now();
+    let target = null;
+    for (const match of matches) {
+      const done = now >= match.start + NOW_MINUTES * 60000;
+      match.node.classList.toggle("done", done);
+      match.statusNode.textContent = now < match.start ? startsIn(match.start - now) : done ? "Done" : "Now";
+      if (!target && !done) target = match;
+    }
+    renderNext(matches, target, now);
+  }
+
+  // ---------- Start ----------
+
+  const { matches, unreadable } = parseSchedule($("schedule").textContent);
+  renderSchedule(matches);
+
+  if (matches.length) {
+    $("tz-note").textContent = `Times are in your local time (${utcOffsetLabel()}).`;
+    $("tz-note").hidden = false;
+  }
+
+  if (unreadable.length) {
+    const box = $("errors");
+    const list = el("ul");
+    unreadable.forEach((line) => list.append(el("li", "", line)));
+    box.append(el("p", "", "These schedule lines couldn't be read. Format: match | 2026-10-08 | 09:30 | field | red | blue"), list);
+    box.hidden = false;
+  }
+
+  const loop = () => {
+    tick(matches);
+    setTimeout(loop, 1000 - (Date.now() % 1000) + 10);
+  };
+  loop();
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(matches); });
+})();
+</script>
+</body>
+</html>
